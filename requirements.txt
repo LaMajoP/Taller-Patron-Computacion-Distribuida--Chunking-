@@ -1,4 +1,6 @@
-dask[dataframe,distributed]>=2024.12.0,<2026.0.0
+dask[distributed]>=2024.12.0,<2026.0.0
+# Dependencia opcional de Dask necesaria para servir el dashboard en :8787.
+bokeh>=3.1.0,<4.0.0
 prefect>=3.0.0,<4.0.0
 prefect-dask>=0.3.7,<0.4.0
 pyarrow>=16.0.0

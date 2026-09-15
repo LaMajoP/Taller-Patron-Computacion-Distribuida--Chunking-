@@ -38,12 +38,17 @@ def execution_location() -> tuple[str, int]:
 
 @task(name="1. Validar infraestructura Dask", retries=3, retry_delay_seconds=5)
 def validate_cluster() -> dict[str, int]:
-    """Comprueba que el flow no empiece hasta tener los tres workers."""
+    """Comprueba el clúster y habilita el diagnóstico Task Stream antes de procesar."""
     logger = get_run_logger()
     with get_dask_client() as client:
         workers = client.scheduler_info()["workers"]
         threads = sum(item["nthreads"] for item in workers.values())
+        # Dask crea este diagnóstico bajo demanda. Activarlo ahora hace que el
+        # dashboard retenga las tareas de las seis particiones aunque se abra
+        # después de que el flow haya terminado.
+        client.get_task_stream()
     logger.info("Clúster conectado: %s workers y %s hilos", len(workers), threads)
+    logger.info("Diagnóstico Task Stream habilitado para esta ejecución")
     if len(workers) < EXPECTED_WORKERS:
         raise RuntimeError(f"Se requieren {EXPECTED_WORKERS} workers; disponibles: {len(workers)}")
     return {"workers": len(workers), "threads": threads}

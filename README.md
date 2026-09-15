@@ -32,6 +32,7 @@ Todos los servicios comparten la red bridge `dask-cluster-net` y el directorio l
 ├── docker-compose.yml          # Scheduler, 3 workers, Prefect Server y runner
 ├── Dockerfile                  # Imagen Python 3.11 compartida por los servicios
 ├── requirements.txt
+├── evidencian-.png             # Evidencia del dashboard Dask tras una ejecución
 ├── src/
 │   ├── cleaning.py             # Funciones puras de limpieza
 │   ├── generate_dirty_data.py  # Generador reproducible de seis CSV
@@ -149,14 +150,28 @@ En la última ejecución validada se obtuvieron 281.879 códigos canónicos, 18.
 
 ### 6. Consultar la observabilidad
 
-- Dask Dashboard: <http://localhost:8787/status>. Abre **Task Stream** para ver la ocupación de los seis hilos y **Workers** para CPU y memoria de cada nodo.
-- Prefect UI: <http://localhost:4200>. Abre el último flow run para ver el DAG, estados, logs y reintentos.
+- Dask Dashboard: <http://localhost:8787/status>. Abre **Task Stream** para ver la actividad de las tareas en los workers e **Workers** para CPU y memoria de cada nodo.
+
+#### Evidencia de ejecución distribuida
+
+La siguiente captura corresponde al Dask Dashboard después de ejecutar el flow. Las
+barras del **Task Stream** prueban que las tareas se materializaron en paralelo; el
+panel izquierdo muestra la memoria repartida entre los tres workers. Las duraciones y
+el worker concreto pueden variar entre ejecuciones porque el scheduler balancea las
+particiones según disponibilidad.
+
+![Evidencia del Dask Dashboard: tres workers y tareas distribuidas en el Task Stream](evidencian-.png)
+
+El flow habilita el registro de **Task Stream** antes de enviar las seis particiones,
+por lo que las barras quedan disponibles al abrir el dashboard después de que termine.
+Dask conserva una ventana limitada de tareas recientes y la vacía al reiniciar el
+scheduler; los artifacts de Prefect sí permanecen en su volumen.
 
 La etapa final del flow deja dos artifacts persistentes en Prefect:
 
 | Artifact | Contenido |
 |---|---|
-| `dask-cluster-execution-breakdown` | Particiones, filas, hilos y tiempo agregados por worker |
+| `dask-cluster-execution-breakdown` | Particiones, filas, hilos y tiempo de procesamiento agregado por worker |
 | `dask-partitions-by-worker` | Worker, hilo, filas, anomalías, mojibake reparado y duración de cada CSV |
 
 También se pueden listar desde la terminal:

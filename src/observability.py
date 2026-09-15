@@ -47,7 +47,7 @@ def execution_breakdown(reports: list[dict[str, Any]]) -> tuple[list[dict[str, A
             "hilos usados": len(total["threads"]),
             "particiones": total["partitions"],
             "filas procesadas": total["rows"],
-            "CPU (s)": round(total["seconds"], 2),
+            "tiempo de procesamiento (s)": round(total["seconds"], 2),
             "% de la carga": round(total["seconds"] * 100 / elapsed_total, 1),
         }
         for worker, total in sorted(totals.items())
