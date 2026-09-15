@@ -1,0 +1,98 @@
+x-dask-image: &dask-image
+  build: .
+  image: dask-prefect-lab:latest
+  networks: [dask-cluster-net]
+  environment:
+    PYTHONPATH: /app
+    PREFECT_API_URL: http://prefect-server:4200/api
+  volumes:
+    - ./shared-data:/shared-data
+    - ./src:/app/src
+
+services:
+  dask-scheduler:
+    <<: *dask-image
+    command: dask scheduler --host 0.0.0.0
+    ports:
+      - "8786:8786"
+      - "8787:8787"
+    cpus: 1.0
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 8786), 2).close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  dask-worker-1:
+    <<: *dask-image
+    command: dask worker tcp://dask-scheduler:8786 --name worker-1 --nthreads 2 --memory-limit 1500MB --local-directory /tmp/dask
+    cpus: 2.0
+    mem_limit: 1500m
+    depends_on:
+      dask-scheduler:
+        condition: service_healthy
+
+  dask-worker-2:
+    <<: *dask-image
+    command: dask worker tcp://dask-scheduler:8786 --name worker-2 --nthreads 2 --memory-limit 1500MB --local-directory /tmp/dask
+    cpus: 2.0
+    mem_limit: 1500m
+    depends_on:
+      dask-scheduler:
+        condition: service_healthy
+
+  dask-worker-3:
+    <<: *dask-image
+    command: dask worker tcp://dask-scheduler:8786 --name worker-3 --nthreads 2 --memory-limit 1500MB --local-directory /tmp/dask
+    cpus: 2.0
+    mem_limit: 1500m
+    depends_on:
+      dask-scheduler:
+        condition: service_healthy
+
+  prefect-server:
+    <<: *dask-image
+    command: prefect server start --host 0.0.0.0
+    ports:
+      - "4200:4200"
+    environment:
+      PYTHONPATH: /app
+      PREFECT_HOME: /prefect
+      PREFECT_API_URL: http://127.0.0.1:4200/api
+    volumes:
+      - ./shared-data:/shared-data
+      - ./src:/app/src
+      - prefect-data:/prefect
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 4200), 2).close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  pipeline:
+    <<: *dask-image
+    command: python -m src.pipeline_flow
+    profiles: ["tools"]
+    environment:
+      PYTHONPATH: /app
+      DATA_ROOT: /shared-data
+      DASK_SCHEDULER: tcp://dask-scheduler:8786
+      PREFECT_API_URL: http://prefect-server:4200/api
+    volumes:
+      - ./shared-data:/shared-data
+      - ./src:/app/src
+      - ./tests:/app/tests
+    depends_on:
+      dask-scheduler:
+        condition: service_healthy
+      prefect-server:
+        condition: service_healthy
+
+networks:
+  dask-cluster-net:
+    name: dask-cluster-net
+    driver: bridge
+
+volumes:
+  prefect-data:

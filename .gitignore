@@ -1,0 +1,11 @@
+# Runtime data produced by the laboratory
+shared-data/
+shared-data/
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.prefect/
+
+contexto-proyecto.txt
