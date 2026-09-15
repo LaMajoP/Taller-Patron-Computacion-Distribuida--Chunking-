@@ -32,7 +32,7 @@ Todos los servicios comparten la red bridge `dask-cluster-net` y el directorio l
 ├── docker-compose.yml          # Scheduler, 3 workers, Prefect Server y runner
 ├── Dockerfile                  # Imagen Python 3.11 compartida por los servicios
 ├── requirements.txt
-├── evidencian-.png             # Evidencia del dashboard Dask tras una ejecución
+├── evidencia.png               # Evidencia del dashboard Dask tras una ejecución
 ├── src/
 │   ├── cleaning.py             # Funciones puras de limpieza
 │   ├── generate_dirty_data.py  # Generador reproducible de seis CSV
@@ -160,7 +160,7 @@ panel izquierdo muestra la memoria repartida entre los tres workers. Las duracio
 el worker concreto pueden variar entre ejecuciones porque el scheduler balancea las
 particiones según disponibilidad.
 
-![Evidencia del Dask Dashboard: tres workers y tareas distribuidas en el Task Stream](evidencian-.png)
+![Evidencia del Dask Dashboard: tres workers y tareas distribuidas en el Task Stream](evidencia.png)
 
 El flow habilita el registro de **Task Stream** antes de enviar las seis particiones,
 por lo que las barras quedan disponibles al abrir el dashboard después de que termine.
